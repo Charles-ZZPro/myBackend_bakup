@@ -56,7 +56,9 @@ urlpatterns = [
     url(r'^index_cnt_from_cdn/$', views.index_cnt_from_cdn),  
     url(r'^apk_cnt_from_cdn/$', views.apk_cnt_from_cdn),   
     url(r'^download_multiapks/$', views.download_multiapks),           
-      
+    
+    url(r'^get_pure_dnu/$', views.get_pure_dnu), 
+    
 #############                
 ]
 #http://120.77.179.136/

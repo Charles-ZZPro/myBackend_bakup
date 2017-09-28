@@ -21,6 +21,16 @@ from wsgiref.util import FileWrapper
 import urllib2
 from django.http import HttpResponseRedirect  
 
+from leancloud import Object
+from leancloud import Query
+from leancloud.errors import LeanCloudError
+import leancloud
+# import time
+# import datetime
+import hashlib
+# from random import Random
+# import sys
+
 #from pyinotify import WatchManager, Notifier, ProcessEvent, IN_DELETE, IN_CREATE, IN_MODIFY
 
 reload(sys)
@@ -3409,7 +3419,7 @@ def index_cnt_from_cdn(url, date_from, date_to):
     root = "/home/charles/Downloads/LOG_DL/"
     os.chdir(root)
 
-    cmd_dl = './cdnlogdownloader.sh -domain="yt.thetripics.com" -id="AjHtBvujgTZo3JUw" -secret="WsgWVEzBi0nHNwoC0mNEBJaMk5iWx7"  -date="'
+    cmd_dl = './cdnlogdownloader.sh -domain="wallpaper.thetripics.com" -id="AjHtBvujgTZo3JUw" -secret="WsgWVEzBi0nHNwoC0mNEBJaMk5iWx7"  -date="'
     timestamp_mid = timeStamp_from
     while timeStamp_from <= timestamp_mid and timeStamp_to >= timestamp_mid:
         time_tuple = time.gmtime(timestamp_mid)
@@ -3422,6 +3432,7 @@ def index_cnt_from_cdn(url, date_from, date_to):
     os.system(cmd_dl)
 
     url = url.replace("$$$","/")
+    print(url)
     prefix_f = url[0:url.find('/')]
 
     result_str = ""
@@ -3641,3 +3652,258 @@ def download_multiapks(apks):
     # return response 
 
     return "Request apks are downloaded successfully !"
+
+#####
+def find_all_index(arr,item):
+    return [i for i,a in enumerate(arr) if a==item]
+
+##### get pure dnu/dau
+def get_pure_dnu(argv):
+    result_str = ""
+    proj_id_all = []
+    proj_id_argv = argv
+
+    leancloud.init("Fhdcn0x7iznoVTkg6kzthl6w-gzGzoHsz", master_key="usMoq9bILw9Yp39lL2K89sjq")
+
+    if proj_id_argv == 'all-recal':
+        queryAll = True
+        cql_get_all_proj = "select * from Project order by name limit 99999999"
+        todo_query_all_proj = leancloud.Query.do_cloud_query(cql_get_all_proj)
+        todo_list_all_proj = todo_query_all_proj.results # 返回符合条件的 todo list 
+        for each_proj in todo_list_all_proj:
+            proj_id_all.append(each_proj.get('name'))
+    elif proj_id_argv == 'all':
+        queryAll = True
+        # proj_id_all = ['Game01', 'OPPO', 'Titan01', 'Tripics测试通', 'aa', 'ad_dev_002', 'ad_ota_001', 'ad_ota_001_1', 'ad_ota_002', 'ad_ota_003', 'ad_ota_004', 'ad_ota_005', 'atcomm', 'dev_001', 'dev_002', 'divert testing', 'ecommerce01', 'fanzhuo-s004', 'fanzhuo_S003', 'fanzhuo_S004', 'google_play', 'ota_001', 'ota_001_1', 'ota_002', 'ota_003', 'ota_004', 'ota_005', 'sub_dev_001', 'sub_dev_002', 'sub_ota_S001', 'sub_ota_S002', 'sub_ota_S003', 'sub_ota_S004', 'unknown', 'wechat01', 'yeh-nigger32', '特别行动X', '金立壁纸广告5', '金立壁纸广告_01', '金立壁纸广告_02', '金立壁纸管广告']
+        proj_id_all = ['ota_001_1', 'ad_ota_001_1', 'ad_ota_005', 'ad_ota_004', 'ad_ota_001', 'ota_004', 'ota_003', 'google_play', 'ota_001', 'ad_ota_003', 'fanzhuo_S004', 'ota_005']
+    else:
+        proj_id_all.append(proj_id_argv)
+
+    # print(len(todo_list_all_proj))
+    # print(proj_id_all)
+    # exit(0)
+    # print(2)
+    # print(datetime.datetime.now())
+
+    # class _File(Object):
+    #     pass
+
+    # class Todo(Object):
+    #     pass
+
+    # class _User(Object):
+    #     pass
+
+    # class Project(Object):
+    #     pass
+
+    # class ProjectDate(Object):
+    #     pass
+
+    # class StatDAU(Object):
+    #     pass
+
+    # class StatLog(Object):
+    #     pass
+
+    # class StatUser(Object):
+    #     pass
+
+    # class UserProjectMap(Object):
+    #     pass
+
+    # class StatInternalUser(Object):
+    #     pass    
+
+    res_col = []
+
+    aday_for_st = datetime.timedelta(days=-1)
+    ahour_for_st = datetime.timedelta(hours=-8)
+    now = datetime.datetime.now()
+    date_str = now.strftime('%Y-%m-%d')
+    date_from = (datetime.datetime.strptime(date_str+" 00:00:00", "%Y-%m-%d %H:%M:%S")+aday_for_st+ahour_for_st).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    date_to = (datetime.datetime.strptime(date_str+" 23:59:59", "%Y-%m-%d %H:%M:%S")+aday_for_st+ahour_for_st).strftime('%Y-%m-%dT%H:%M:%S.999Z')
+
+    ########all dnu query
+    cql_get_all_user = "select objectId, androidId, projectId, createdAt ,verified from StatUser where createdAt<date(?) order by createdAt limit 99999999"
+    todo_query_all_user = leancloud.Query.do_cloud_query(cql_get_all_user, date_to)
+    todo_list_all_user = todo_query_all_user.results # 返回符合条件的 todo list 
+    ########all dau query
+    cql_get_dau = "select objectId, userId, projectId, createdAt, verified from StatDAU  where createdAt>=date(?) and createdAt<=date(?) order by createdAt limit 99999999"
+    todo_query_dau = leancloud.Query.do_cloud_query(cql_get_dau, date_from, date_to)
+    todo_list_dau = todo_query_dau.results # 返回符合条件的 todo list 
+
+    # print(3)
+    # print(datetime.datetime.now())
+
+    ########dnu calculation
+    for proj_id in proj_id_all:
+        # if proj_id.count('Tripics')==0:
+        #     continue
+        # print(proj_id)
+        dnu_cnt = 0
+        dau_cnt = 0
+        dnu_gross_cnt = 0
+        dau_gross_cnt = 0
+
+        user_obj_former = []
+        aid_former = []
+        oid_former = []
+        proj_former = []
+
+        user_obj_today = []
+
+        user_obj_all = []
+        aid_all = []
+        oid_all = []
+        proj_all = []
+        time_all = []
+
+        dau_obj_all = []
+        dau_oid_all = []
+        dau_aid_all = []
+        dau_uid_all = []
+        dau_proj_all = []
+
+        dau_obj_today = []
+
+        user_obj_thisproj = []    
+
+        for each_user in todo_list_all_user:
+            aid = each_user.get('androidId')
+            oid = each_user.get('objectId')
+            pid = each_user.get('projectId')
+            if pid is None:
+                pid = "ng"
+            time = each_user.get('createdAt')
+
+            user_obj_all.append(each_user)
+            aid_all.append(aid)
+            oid_all.append(oid)
+            time_all.append(time)
+            proj_all.append(pid)
+            
+            if pid == proj_id:
+                user_obj_thisproj.append(each_user)
+
+            if time.strftime('%Y-%m-%dT%H:%M:%S.000Z')<date_from:
+                user_obj_former.append(each_user)
+                aid_former.append(aid)
+                proj_former.append(pid)
+            elif pid == proj_id:
+                user_obj_today.append(each_user)
+
+        # print(4)
+        # print(datetime.datetime.now())
+
+        # dnu_all_len = len(user_obj_today)
+        # print(len(user_obj_today))
+        for each_user_today in user_obj_today:
+            aid_today = each_user_today.get('androidId')
+            oid_today = each_user_today.get('objectId')
+            pid_today = each_user_today.get('projectId')
+            time_today = each_user_today.get('createdAt')
+            # if each_user_today.get('verified')==False:
+            #     continue
+            cflag=True
+            if (aid_today in aid_former):
+                index_f = find_all_index(aid_former,aid_today)
+                for every_index in index_f:
+                    if ('ad_'+pid_today) == str(proj_former[every_index]):
+                        cflag=False
+                if cflag==True:
+                    if each_user_today.get('verified')==True:
+                        dnu_cnt+=1
+                        dnu_gross_cnt+=1
+                    else:
+                        dnu_gross_cnt+=1
+            else:
+                if each_user_today.get('verified')==True:
+                    dnu_cnt+=1
+                    dnu_gross_cnt+=1
+                else:
+                    dnu_gross_cnt+=1
+
+        # print(5)
+        # print(datetime.datetime.now())
+
+    ########dau calculation
+
+        for each_dau in todo_list_dau:
+            oid_dau = each_dau.get('objectId')
+            pid_dau = each_dau.get('projectId')
+            time_dau = each_dau.get('createdAt')
+            uid_dau = each_dau.get('userId')
+
+            aid_dau = aid_all[oid_all.index(uid_dau)]
+
+            dau_obj_all.append(each_dau)
+            dau_oid_all.append(oid_dau)
+            dau_aid_all.append(aid_dau)
+            dau_uid_all.append(uid_dau)    
+            dau_proj_all.append(pid_dau)
+
+        # print(7)
+        # print(datetime.datetime.now())
+
+        for index_dau,each_dau_obj in enumerate(dau_obj_all):
+            each_aid_dau = dau_aid_all[index_dau] 
+            each_pid_dau = dau_proj_all[index_dau] 
+            each_uid_dau = dau_uid_all[index_dau]
+            dau_user_index = oid_all.index(each_uid_dau)
+
+            plus_confirm = False
+            proj_col_dau = []
+            if aid_all.count(each_aid_dau)>=2:
+                index_dcheck = find_all_index(aid_all,each_aid_dau)
+                cflag_dau = True
+                for each_index_dcheck in index_dcheck:
+                    proj_col_dau.append(proj_all[each_index_dcheck])
+                    if each_index_dcheck == dau_user_index:
+                        continue
+                    
+                    if ("ad_"+proj_id)==proj_all[each_index_dcheck]:
+                        cflag_dau = False
+                        break
+                    if each_index_dcheck<dau_user_index and proj_id!=("ad_"+proj_all[each_index_dcheck]) and ("ad_"+proj_id)!=proj_all[each_index_dcheck]:
+                        cflag_dau = False
+                        break
+
+                if cflag_dau == True and (proj_id in proj_col_dau):
+                    if each_dau_obj.get('verified')==True:
+                        dau_cnt+=1
+                        dau_gross_cnt+=1
+                        plus_confirm = True
+                    else:
+                        dau_gross_cnt+=1
+                        
+            elif proj_id == each_pid_dau:
+                if each_dau_obj.get('verified')==True:
+                    dau_cnt+=1
+                    dau_gross_cnt+=1
+                    plus_confirm = True
+                else:
+                    dau_gross_cnt+=1
+
+            # if plus_confirm == True:
+            #     print(each_aid_dau+'       '+str(each_dau_obj.get('projectId')))
+
+        # print(8)
+        # print(datetime.datetime.now())
+
+        dic = {}
+        dic['proj_id'] = proj_id
+        dic['dnu'] = dnu_cnt
+        dic['dau'] = dau_cnt
+        dic['dnu_gross'] = dnu_gross_cnt
+        dic['dau_gross'] = dau_gross_cnt
+        print(proj_id + ':::::::::::::::')
+        print(dic)
+        res_col.append(dic)
+        # result_str = result_str + 
+        # result_str = '{"allData":[' + result_str +']}' 
+        result_str = result_str+'{"proj_id":"' + proj_id +'",'+'"dnu":"' + str(dnu_cnt) +'",'+'"dau":"' + str(dau_cnt) +'",'+'"dnu_gross":"' + str(dnu_gross_cnt) +'",'+'",'+'"dau_gross":"' + str(dau_gross_cnt) +'"},'
+
+    result_str = "["+result_str[0:int(len(result_str))-1]+"]"
+    return  result_str
+    # print(res_col)

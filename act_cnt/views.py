@@ -28,6 +28,15 @@ from django import http
 import sys
 from django.shortcuts import render
 
+from leancloud import Object
+from leancloud import Query
+from leancloud.errors import LeanCloudError
+import leancloud
+# import time
+# import datetime
+import hashlib
+# from random import Random
+# import sys
 
 def first_page(request):
     return HttpResponse("<p>Gotcha!!!!</p>")
@@ -539,3 +548,8 @@ def download_multiapks(request):
     # proj_name = request.GET.get('proj_name')      
     
     # return HttpResponse(models.download_multiapks(apks)) 
+
+def get_pure_dnu(request):  
+    argv = request.GET.get('proj_id')    
+    # proj_name = request.GET.get('proj_name')      
+    return HttpResponse(models.get_pure_dnu(argv), content_type="text/plain") 
